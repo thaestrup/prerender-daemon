@@ -3,7 +3,8 @@
 #variables
 VERSION="1.1.1"
 SOURCE=$(dirname ${BASH_SOURCE[0]})
-INITSCRIPT="$SOURCE/prerender.init"
+DEFAULTINITSCRIPT="$SOURCE/prerender.init"
+INITSCRIPT=""
 SERVERSCRIPT=""
 DEFAULT_NODE_PREFIX="/usr"
 NODE_PREFIX=$DEFAULT_NODE_PREFIX
@@ -33,13 +34,17 @@ do
 	    	NODE_PREFIX="${i#*=}"
 	    ;;
 
-	    -s=*|--server-script=*)
-	    	SERVERSCRIPT="${i#*=}"
-	    ;;
+    -s=*|--server-script=*)
+    	SERVERSCRIPT="${i#*=}"
+    ;;
+
+		-i=*|--init-script=*)
+    	INITSCRIPT="${i#*=}"
+    ;;
 	esac
 done
 
-banner() {	
+banner() {
 	echo "" 1>&3 2>&4;
 	echo "» ${bold}Prerender-daemon installer v${VERSION}${normal} by Luciano Mammino"
 	echo "»  http://loige.com"
@@ -84,17 +89,18 @@ if [ "$SHOW_HELP" = true ]; then
 	-v|--verbose			Enable verbose output
 	(-p|--node-prefix)=VALUE	specify a custom node prefix (default "${DEFAULT_NODE_PREFIX}")
 	(-s|--server-script)=VALUE	specify a custom server script that will be used to replace the default launch script (eg. to provide a custom configuration)
+	(-i|--init-script)=VALUE	specify a custom init script that will be used to replace the default init script (eg. to provide support for other distributions)
 
  Examples:
 
  	Install with default options:
  		sudo ./install.sh
- 	
+
  	Uninstall:
  		sudo ./install.sh --uninstall
 
- 	Install with custom node prefix and using a custom server script:
- 		sudo ./install.sh --node-prefix=usr/local --server-script=~/temp/my-custom-script.sh
+ 	Install with custom node prefix and using a custom server script and using rhel6 init script:
+ 		sudo ./install.sh --node-prefix=usr/local --server-script=~/temp/my-custom-script.sh --init-script=./prerender-rhel6.init
 
 EOF
 	exit 0;
@@ -147,6 +153,11 @@ if [ -e "$SERVERSCRIPT" ]; then
 	chmod +x $DEFAULTSCRIPT;
 	echo "  ${bold}✓${normal} Server script copied to ${DEFAULTSCRIPT}" 1>&3 2>&4
 fi
+
+if [ -e "$INITSCRIPT" ]; then
+	INITSCRIPT=$DEFAULTINITSCRIPT
+fi
+echo "  ${bold}✓${normal} Using init script ${INITSCRIPT}" 1>&3 2>&4
 
 useradd -r -s /bin/false prerender
 echo "  ${bold}✓${normal} prerender user and user group added" 1>&3 2>&4

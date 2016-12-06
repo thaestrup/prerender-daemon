@@ -1,0 +1,69 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          prerender
+# Required-Start:    networking
+# Required-Stop:     networking
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Run prerender collector as daemon
+# Description:       Run prerender collector as daemon
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+NAME="prerender"
+APP_DIR="/usr/bin"
+APP_BIN="prerender"
+APP_ARGS=""
+USER="prerender"
+GROUP="prerender"
+
+start() {
+	echo -n "Starting $NAME..."
+	mkdir -p $PIDDIR
+	if daemon --name=$NAME --user="$USER:$GROUP" --syslog --errlog --respawn --attempts=2 "$APP_DIR/$APP_BIN $APP_ARGS &" ; then
+        exit 0
+    else
+        exit 1
+    fi
+}
+
+stop() {
+	echo -n "Stopping $NAME..."
+	if daemon --stop --user="$USER:$GROUP" --name=$NAME ; then
+        exit 0
+    else
+        exit 1
+    fi
+}
+
+status() {
+	daemon --running --user="$USER:$GROUP" --name=$NAME
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+
+    stop)
+        stop
+        ;;
+
+    restart|reload|force-reload)
+        stop
+        sleep 2
+        start
+        ;;
+
+    status)
+        status
+        ;;
+
+    *)
+        echo "Usage: service $NAME {start|stop|reload|force-reload|restart|status} (you might need sudo)"
+        exit 2
+
+esac
+
+exit 0
