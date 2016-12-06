@@ -9,7 +9,7 @@
 # Description:       Run prerender collector as daemon
 ### END INIT INFO
 
-. /lib/lsb/init-functions
+. /etc/init.d/functions
 
 NAME="prerender"
 APP_DIR="/usr/bin"
