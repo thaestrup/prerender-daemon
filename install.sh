@@ -154,7 +154,7 @@ if [ -e "$SERVERSCRIPT" ]; then
 	echo "  ${bold}✓${normal} Server script copied to ${DEFAULTSCRIPT}" 1>&3 2>&4
 fi
 
-if [ -e "$INITSCRIPT" ]; then
+if [ ! -e "$INITSCRIPT" ]; then
 	INITSCRIPT=$DEFAULTINITSCRIPT
 fi
 echo "  ${bold}✓${normal} Using init script ${INITSCRIPT}" 1>&3 2>&4
