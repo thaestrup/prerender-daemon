@@ -12,33 +12,51 @@
 . /etc/init.d/functions
 
 NAME="prerender"
+PIDDIR="/var/run/prerender"
+PIDFILE="$PIDDIR/prerender.pid"
 APP_DIR="/usr/bin"
 APP_BIN="prerender"
 APP_ARGS=""
 USER="prerender"
 GROUP="prerender"
+DAEMON="$APP_DIR/$APP_BIN"
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r /etc/sysconfig/$NAME ] && . /etc/sysconfig/$NAME
 
 start() {
 	echo -n "Starting $NAME..."
 	mkdir -p $PIDDIR
-	if daemon --name=$NAME --user="$USER:$GROUP" --syslog --errlog --respawn --attempts=2 "$APP_DIR/$APP_BIN $APP_ARGS &" ; then
-        exit 0
-    else
-        exit 1
-    fi
+
+	daemon --user="$USER" --pidfile="$PIDFILE" "$DAEMON $APP_ARGS &"
+  RETVAL=$?
+  pid=`ps -A | grep $NAME | cut -d" " -f2`
+  pid=`echo $pid | cut -d" " -f2`
+  if [ -n "$pid" ]; then
+          echo $pid > "$PIDFILE"
+  fi
+  echo
+  return $RETVAL
 }
 
 stop() {
 	echo -n "Stopping $NAME..."
-	if daemon --stop --user="$USER:$GROUP" --name=$NAME ; then
-        exit 0
-    else
-        exit 1
-    fi
+	killproc -p "$PIDFILE" -d 10 "$DAEMON"
+	RETVAL="$?"
+	echo
+	[ $RETVAL = 0 ] && rm -f "$PIDFILE"
+	return "$RETVAL"
 }
 
-status() {
-	daemon --running --user="$USER:$GROUP" --name=$NAME
+
+rh_status() {
+    # run checks to determine if the service is running or use generic status
+    status -p $PIDFILE $NAME
+		RETVAL="$?"
+		return "$RETVAL"
 }
 
 case "$1" in
@@ -57,13 +75,12 @@ case "$1" in
         ;;
 
     status)
-        status
+        rh_status
         ;;
 
     *)
         echo "Usage: service $NAME {start|stop|reload|force-reload|restart|status} (you might need sudo)"
         exit 2
-
 esac
 
-exit 0
+exit $RETVAL
